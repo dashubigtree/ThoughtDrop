@@ -12,6 +12,7 @@ struct ThoughtDropApp: App {
 final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
     private var statusItem: NSStatusItem!
     private var panel: NSPanel!
+    private var chatWindow: NSWindow?
     private var model: AppModel!
     private var hotKey: EventHotKeyRef?
     private var handler: EventHandlerRef?
@@ -38,6 +39,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
         panel.delegate = self
         panel.contentView = NSHostingView(rootView: CaptureView(model: model))
         panel.center()
+        model.openChat = { [weak self] in self?.showChat() }
         registerShortcut()
         showPanel()
     }
@@ -45,6 +47,20 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
     @objc private func showPanel() {
         NSApp.activate(ignoringOtherApps: true)
         panel?.makeKeyAndOrderFront(nil)
+    }
+
+    private func showChat() {
+        if chatWindow == nil {
+            let window = NSWindow(contentRect: NSRect(x: 0, y: 0, width: 520, height: 640),
+                                  styleMask: [.titled, .closable, .miniaturizable, .resizable], backing: .buffered, defer: false)
+            window.title = "拾念 · 知識庫對話"
+            window.isReleasedWhenClosed = false
+            window.contentView = NSHostingView(rootView: ChatView(model: model))
+            window.center()
+            chatWindow = window
+        }
+        NSApp.activate(ignoringOtherApps: true)
+        chatWindow?.makeKeyAndOrderFront(nil)
     }
 
     func applicationShouldHandleReopen(_ sender: NSApplication, hasVisibleWindows flag: Bool) -> Bool { showPanel(); return true }
@@ -65,7 +81,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
 
     func applicationShouldTerminate(_ sender: NSApplication) -> NSApplication.TerminateReply {
         guard model != nil else { return .terminateNow }
-        if model.recording || model.starting || model.processing || model.summarizing || model.checkingConnection {
+        if model.recording || model.starting || model.processing || model.summarizing || model.checkingConnection || model.asking {
             let alert = NSAlert()
             alert.messageText = "錄音或整理還在進行"
             alert.informativeText = "請完成後再結束。關閉視窗即可讓拾念繼續在選單列運作。"

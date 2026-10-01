@@ -19,7 +19,10 @@ struct CaptureView: View {
                     Text("拾念").font(.system(size: 13, weight: .medium))
                 }
                 Spacer()
+                Button { model.openChat?() } label: { Image(systemName: "bubble.left.and.text.bubble.right").font(.system(size: 15)) }
+                    .buttonStyle(.plain).help("與知識庫對話").accessibilityLabel("與知識庫對話")
                 Menu {
+                    Button("與知識庫對話…") { model.openChat?() }
                     Button("設定…") { settings = true }
                     Button("開啟儲存資料夾", action: model.openFolder)
                     Button("開啟知識庫", action: model.openWiki)

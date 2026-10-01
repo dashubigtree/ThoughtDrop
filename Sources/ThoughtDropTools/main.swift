@@ -26,8 +26,25 @@ struct Maintenance {
             let archive = try Archive(root: temporary)
             try archive.persistReport(report, day: clip.day, clips: [clip])
             print("\(provider.title)：人工測試文字的校正、每日整理與來源驗證皆成功。未讀取 vault 私人筆記。")
+        case "check-chat":
+            let provider: LLMProvider = CommandLine.arguments.dropFirst(2).first == "claude" ? .claude : .codex
+            let temporary = FileManager.default.temporaryDirectory.appendingPathComponent("ThoughtDrop-chat-check-\(UUID())")
+            defer { try? FileManager.default.removeItem(at: temporary) }
+            let archive = try Archive(root: temporary)
+            try "# 城市聲音故事\n\n## 2026-10-01\n\n想法：主角是一位收集城市聲音的旅人。暫定決定：明天先寫一段開場。\n".write(
+                to: temporary.appendingPathComponent("wiki/personal/story.md"), atomically: true, encoding: .utf8)
+            _ = archive
+            let retriever = WikiRetriever(root: temporary)
+            let client = LLMClient(provider: provider)
+            let known = try retriever.search("我的故事主角是誰？明天打算做什麼？")
+            let answered = try await client.answer(question: "我的故事主角是誰？明天打算做什麼？", history: [], passages: known)
+            print("可答問題 →", answered.text, "| 來源：", answered.sources.map(\.id))
+            let unknown = try retriever.search("故事主角的血型是什麼？")
+            let refused = unknown.isEmpty ? ChatAnswer(text: "（無檢索結果，未呼叫 LLM）", sources: [])
+                : try await client.answer(question: "故事主角的血型是什麼？", history: [], passages: unknown)
+            print("不可答問題 →", refused.text, "| 來源：", refused.sources.map(\.id))
         default:
-            print("用法：ThoughtDropTools prepare-vault | check-codex | check-claude")
+            print("用法：ThoughtDropTools prepare-vault | check-codex | check-claude | check-chat [codex|claude]")
         }
     }
 }

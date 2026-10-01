@@ -116,6 +116,8 @@ Vault 路徑依序由環境變數 `THOUGHTDROP_VAULT`、設定檔 `~/.config/tho
 
 維護命令（需先建置）：
 
+`check-chat [codex|claude]` 以虛構 wiki 驗證知識庫問答（一題可答、一題不可答）。
+
 ```sh
 swift run ThoughtDropTools prepare-vault
 swift run ThoughtDropTools check-codex

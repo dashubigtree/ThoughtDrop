@@ -150,6 +150,23 @@ public final class Archive {
         try write(index, to: generated.appendingPathComponent("index.md"))
     }
 
+    /// Writes one conversation as a Markdown note under `chats/`. These are never indexed for retrieval,
+    /// so an answer can never be fed back as if it were a source.
+    public func saveChat(id: String, started: Date, turns: [(question: String, answer: ChatAnswer, date: Date)]) throws {
+        guard id.allSatisfy({ $0.isNumber || $0 == "-" }) else { throw ThoughtError.message("對話代號無效。") }
+        try fm.createDirectory(at: root.appendingPathComponent("chats"), withIntermediateDirectories: true)
+        var text = "# 知識庫對話 \(started.formatted(date: .abbreviated, time: .shortened))\n\n> 回答由 LLM 根據 wiki 檢索段落產生，請以來源為準。\n\n"
+        for turn in turns {
+            text += "## \(turn.question.replacingOccurrences(of: "\n", with: " "))\n\n\(turn.answer.text)\n\n"
+            if !turn.answer.sources.isEmpty {
+                text += "來源：" + turn.answer.sources.map { source in
+                    link(source.path, label: source.title, relative: "../\(source.path)")
+                }.joined(separator: "、") + "\n\n"
+            }
+        }
+        try write(text, to: root.appendingPathComponent("chats/\(id).md"))
+    }
+
     private func write(_ text: String, to url: URL) throws {
         let title = String((text.split(separator: "\n").first ?? "拾念").drop(while: { $0 == "#" || $0 == " " }))
         let quoted = title.replacingOccurrences(of: "\\", with: "\\\\").replacingOccurrences(of: "\"", with: "\\\"")

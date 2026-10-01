@@ -3,6 +3,14 @@ import SwiftUI
 import ServiceManagement
 import ThoughtCore
 
+struct ChatTurn: Identifiable {
+    let id = UUID()
+    let question: String
+    let date = Date()
+    var answer: ChatAnswer?
+    var error: String?
+}
+
 enum SpeechSource: String, CaseIterable, Identifiable {
     case apple, gemini
     var id: String { rawValue }
@@ -30,6 +38,11 @@ final class AppModel: ObservableObject {
     @Published var geminiModel = UserDefaults.standard.string(forKey: "geminiModel") ?? GeminiTranscriber.defaultModel
     @Published var hasGeminiKey = false
     @Published var launchAtLogin = SMAppService.mainApp.status == .enabled
+    @Published var chat: [ChatTurn] = []
+    @Published var asking = false
+    var openChat: (() -> Void)?
+    private var chatID = AppModel.newChatID()
+    private var chatStarted = Date()
     @Published var lastReportDay: String?
     @Published var shortcutAvailable = true
     private(set) var archive: Archive?
@@ -208,7 +221,7 @@ final class AppModel: ObservableObject {
 
     func saveSettings(provider: LLMProvider, key: String, model: String, local: Bool, login: Bool,
                       speech: SpeechSource = .apple, geminiKey newGeminiKey: String = "", geminiModel newGeminiModel: String = "") throws {
-        guard !processing, !summarizing, !checkingConnection else { throw ThoughtError.message("請等目前 LLM 工作完成後再變更設定。") }
+        guard !processing, !summarizing, !checkingConnection, !asking else { throw ThoughtError.message("請等目前 LLM 工作完成後再變更設定。") }
         guard provider != .openAI || !model.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { throw ThoughtError.message("請填入 API 模型名稱。") }
         if login != launchAtLogin {
             if login { try SMAppService.mainApp.register() } else { try SMAppService.mainApp.unregister() }
@@ -286,6 +299,48 @@ final class AppModel: ObservableObject {
             attempts[day] = nil
             message = "\(day) 的回顧與知識庫已更新"
         } catch { errorMessage = "\(day) 整理未完成：\(error.localizedDescription)" }
+    }
+
+    private static func newChatID() -> String {
+        let formatter = DateFormatter()
+        formatter.locale = Locale(identifier: "en_US_POSIX")
+        formatter.dateFormat = "yyyy-MM-dd-HHmmss"
+        return formatter.string(from: Date())
+    }
+
+    func newChat() {
+        guard !asking else { return }
+        chat = []; chatID = Self.newChatID(); chatStarted = Date()
+    }
+
+    func openSource(_ passage: Passage) { openNote(root.appendingPathComponent(passage.path)) }
+
+    func ask(_ question: String) {
+        guard !asking, let archive else { return }
+        let turn = ChatTurn(question: question)
+        let history = chat.compactMap { previous in previous.answer.map { (question: previous.question, answer: $0.text) } }
+        let query = [chat.last?.question, question].compactMap { $0 }.joined(separator: " ")
+        chat.append(turn)
+        guard llmAvailable else { finishAsk(turn.id) { $0.error = "尚未完成 LLM 連線，請先在設定登入 \(provider.title)。" }; return }
+        asking = true
+        let retriever = WikiRetriever(root: root), client = client
+        Task {
+            do {
+                let passages = try await Task.detached { try retriever.search(query) }.value
+                let answer = passages.isEmpty
+                    ? ChatAnswer(text: "wiki 裡找不到和這個問題相關的內容，所以不回答，以免憑空編造。可以換個說法，或先多錄幾則相關想法。", sources: [])
+                    : try await client.answer(question: question, history: history, passages: passages)
+                finishAsk(turn.id) { $0.answer = answer }
+                let turns = chat.compactMap { t in t.answer.map { (question: t.question, answer: $0, date: t.date) } }
+                do { try archive.saveChat(id: chatID, started: chatStarted, turns: turns) }
+                catch { errorMessage = "回答已顯示，但對話存檔失敗：\(error.localizedDescription)" }
+            } catch { finishAsk(turn.id) { $0.error = error.localizedDescription } }
+            asking = false
+        }
+    }
+
+    private func finishAsk(_ id: UUID, _ change: (inout ChatTurn) -> Void) {
+        if let index = chat.firstIndex(where: { $0.id == id }) { change(&chat[index]) }
     }
 
     func openFolder() { NSWorkspace.shared.open(root) }
