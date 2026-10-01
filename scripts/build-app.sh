@@ -9,6 +9,9 @@ APP="$PWD/dist/ThoughtDrop.app"
 mkdir -p "$APP/Contents/MacOS" "$APP/Contents/Resources"
 cp "$BIN_DIR/ThoughtDrop" "$APP/Contents/MacOS/ThoughtDrop"
 cp Resources/Info.plist "$APP/Contents/Info.plist"
-codesign --force --sign - "$APP"
+# Ad-hoc signing normally pins identity to the binary hash, so every rebuild looks like a new app to
+# macOS privacy (TCC) and re-asks for microphone/speech permission. Pin it to the bundle identifier instead.
+BUNDLE_ID="$(/usr/libexec/PlistBuddy -c 'Print :CFBundleIdentifier' Resources/Info.plist)"
+codesign --force --sign - -r="designated => identifier \"$BUNDLE_ID\"" "$APP"
 codesign --verify --deep --strict "$APP"
 echo "已建立：$APP"
