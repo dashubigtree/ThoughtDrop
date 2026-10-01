@@ -19,10 +19,10 @@ struct CaptureView: View {
                     Text("拾念").font(.system(size: 13, weight: .medium))
                 }
                 Spacer()
-                Button { model.openChat?() } label: { Image(systemName: "bubble.left.and.text.bubble.right").font(.system(size: 15)) }
+                Button(action: model.showChat) { Image(systemName: "bubble.left.and.text.bubble.right").font(.system(size: 15)) }
                     .buttonStyle(.plain).help("與知識庫對話").accessibilityLabel("與知識庫對話")
                 Menu {
-                    Button("與知識庫對話…") { model.openChat?() }
+                    Button("與知識庫對話…", action: model.showChat)
                     Button("設定…") { settings = true }
                     Button("開啟儲存資料夾", action: model.openFolder)
                     Button("開啟知識庫", action: model.openWiki)
@@ -84,7 +84,7 @@ struct CaptureView: View {
                 Text("17:00 每日回顧").foregroundStyle(green)
             }.font(.system(size: 10)).padding(.horizontal, 28).padding(.top, 18).padding(.bottom, 22)
         }
-        .frame(width: 390, height: 490)
+        .frame(width: 440, height: 540)
         .foregroundStyle(ink)
         .background(Color(red: 0.97, green: 0.96, blue: 0.93))
         .preferredColorScheme(.light)

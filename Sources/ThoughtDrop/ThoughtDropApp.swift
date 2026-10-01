@@ -12,7 +12,6 @@ struct ThoughtDropApp: App {
 final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
     private var statusItem: NSStatusItem!
     private var panel: NSPanel!
-    private var chatWindow: NSWindow?
     private var model: AppModel!
     private var hotKey: EventHotKeyRef?
     private var handler: EventHandlerRef?
@@ -29,19 +28,25 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
         statusItem.button?.image = NSImage(systemSymbolName: "waveform.circle", accessibilityDescription: "拾念：開啟錄音")
         statusItem.button?.target = self
         statusItem.button?.action = #selector(showPanel)
-        panel = NSPanel(contentRect: NSRect(x: 0, y: 0, width: 390, height: 490), styleMask: [.titled, .closable, .fullSizeContentView], backing: .buffered, defer: false)
+        panel = NSPanel(contentRect: NSRect(x: 0, y: 0, width: 440, height: 540), styleMask: [.titled, .closable, .fullSizeContentView], backing: .buffered, defer: false)
         panel.title = "拾念 ThoughtDrop"
         panel.titleVisibility = .hidden
         panel.titlebarAppearsTransparent = true
         panel.isMovableByWindowBackground = true
         panel.isReleasedWhenClosed = false
+        panel.isRestorable = false
         panel.hidesOnDeactivate = false
         panel.delegate = self
-        panel.contentView = NSHostingView(rootView: CaptureView(model: model))
+        panel.contentView = NSHostingView(rootView: MainView(model: model))
         panel.center()
-        model.openChat = { [weak self] in self?.showChat() }
         registerShortcut()
         showPanel()
+        // `Settings {}` exists only to satisfy SwiftUI's scene requirement.  It is
+        // not part of ThoughtDrop's interface: settings are shown as a sheet.
+        // Close a restored Settings window from an earlier launch.
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) { [weak self] in
+            self?.closeAuxiliaryWindows()
+        }
     }
 
     @objc private func showPanel() {
@@ -49,21 +54,18 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
         panel?.makeKeyAndOrderFront(nil)
     }
 
-    private func showChat() {
-        if chatWindow == nil {
-            let window = NSWindow(contentRect: NSRect(x: 0, y: 0, width: 520, height: 640),
-                                  styleMask: [.titled, .closable, .miniaturizable, .resizable], backing: .buffered, defer: false)
-            window.title = "拾念 · 知識庫對話"
-            window.isReleasedWhenClosed = false
-            window.contentView = NSHostingView(rootView: ChatView(model: model))
-            window.center()
-            chatWindow = window
-        }
-        NSApp.activate(ignoringOtherApps: true)
-        chatWindow?.makeKeyAndOrderFront(nil)
-    }
-
     func applicationShouldHandleReopen(_ sender: NSApplication, hasVisibleWindows flag: Bool) -> Bool { showPanel(); return true }
+
+    func applicationShouldSaveApplicationState(_ app: NSApplication) -> Bool { false }
+
+    func applicationShouldRestoreApplicationState(_ app: NSApplication) -> Bool { false }
+
+    private func closeAuxiliaryWindows() {
+        for window in NSApp.windows where window !== panel {
+            window.orderOut(nil)
+            window.close()
+        }
+    }
 
     private func registerShortcut() {
         var event = EventTypeSpec(eventClass: OSType(kEventClassKeyboard), eventKind: UInt32(kEventHotKeyPressed))

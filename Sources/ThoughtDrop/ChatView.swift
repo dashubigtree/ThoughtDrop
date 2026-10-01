@@ -4,6 +4,21 @@ import ThoughtCore
 // Use the property wrapper explicitly: CLT SDKs may omit SwiftUI's newer macro plugin.
 private typealias ViewState<Value> = SwiftUI.State<Value>
 
+struct MainView: View {
+    @ObservedObject var model: AppModel
+
+    var body: some View {
+        Group {
+            if model.showingChat {
+                ChatView(model: model)
+            } else {
+                CaptureView(model: model)
+            }
+        }
+        .animation(.easeInOut(duration: 0.18), value: model.showingChat)
+    }
+}
+
 struct ChatView: View {
     @ObservedObject var model: AppModel
     @ViewState private var input = ""
@@ -13,6 +28,13 @@ struct ChatView: View {
     var body: some View {
         VStack(spacing: 0) {
             HStack {
+                Button(action: model.dismissChat) {
+                    Label("返回", systemImage: "chevron.left")
+                        .labelStyle(.iconOnly)
+                }
+                .buttonStyle(.plain)
+                .help("返回錄音")
+                .accessibilityLabel("返回錄音")
                 Text("與知識庫對話").font(.system(size: 15, weight: .medium, design: .serif))
                 Spacer()
                 Button("新對話") { model.newChat() }.disabled(model.asking || model.chat.isEmpty)
@@ -64,7 +86,7 @@ struct ChatView: View {
             Text("只檢索 wiki；片段送至 \(model.provider.title) 回答。對話存於 ThoughtDrop/chats/。")
                 .font(.caption2).foregroundStyle(ink.opacity(0.5)).padding(.horizontal, 20).padding(.vertical, 8)
         }
-        .frame(minWidth: 420, minHeight: 480)
+        .frame(width: 440, height: 540)
         .foregroundStyle(ink)
         .background(Color(red: 0.97, green: 0.96, blue: 0.93))
         .preferredColorScheme(.light)

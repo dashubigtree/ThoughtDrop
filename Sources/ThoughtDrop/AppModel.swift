@@ -40,7 +40,7 @@ final class AppModel: ObservableObject {
     @Published var launchAtLogin = SMAppService.mainApp.status == .enabled
     @Published var chat: [ChatTurn] = []
     @Published var asking = false
-    var openChat: (() -> Void)?
+    @Published var showingChat = false
     private var chatID = AppModel.newChatID()
     private var chatStarted = Date()
     @Published var lastReportDay: String?
@@ -63,6 +63,14 @@ final class AppModel: ObservableObject {
 
     var todayCount: Int { clips.filter { $0.day == Day.key(Date()) }.count }
     var pendingCount: Int { clips.filter { $0.status != .complete && $0.status != .recording }.count }
+
+    func showChat() {
+        showingChat = true
+    }
+
+    func dismissChat() {
+        showingChat = false
+    }
 
     init() {
         do {
