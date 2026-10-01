@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0"><dict>
+<key>CFBundleName</key><string>ThoughtDrop</string>
+<key>CFBundleDisplayName</key><string>拾念</string>
+<key>CFBundleIdentifier</key><string>local.thoughtdrop.app</string>
+<key>CFBundleExecutable</key><string>ThoughtDrop</string>
+<key>CFBundlePackageType</key><string>APPL</string>
+<key>CFBundleShortVersionString</key><string>0.1.0</string>
+<key>CFBundleVersion</key><string>1</string>
+<key>LSMinimumSystemVersion</key><string>14.0</string>
+<key>LSUIElement</key><true/>
+<key>NSMicrophoneUsageDescription</key><string>按下錄音後，拾念使用麥克風記錄你的想法並儲存在本機。</string>
+<key>NSSpeechRecognitionUsageDescription</key><string>拾念會將保存的短錄音轉成逐字稿；預設使用本機辨識，設定允許後才使用 Apple 線上辨識。</string>
+</dict></plist>
