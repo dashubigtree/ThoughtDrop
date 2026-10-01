@@ -135,6 +135,24 @@ public struct ChatAnswer: Sendable, Equatable {
         }
         let trimmed = answer.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmed.isEmpty else { throw ThoughtError.message("LLM 回傳空白回答。") }
+        let isInsufficient = trimmed.hasPrefix("知識庫裡沒有足夠資料")
+        if isInsufficient {
+            guard cited.isEmpty, inline.isEmpty else {
+                throw ThoughtError.message("知識庫不足的回答不應引用來源，已丟棄以避免混淆。請再問一次。")
+            }
+            return ChatAnswer(text: trimmed, sources: [])
+        }
+        // A non-fallback answer must be grounded in visible citations, not merely a sources field.
+        // This catches malformed replies such as "test" before they reach the chat history.
+        guard !inline.isEmpty, Set(cited) == Set(inline) else {
+            throw ThoughtError.message("模型回覆沒有附上可核對的來源標記，已不採用。請再問一次。")
+        }
+        let answerWithoutCitations = pattern.stringByReplacingMatches(in: trimmed, range: NSRange(trimmed.startIndex..., in: trimmed), withTemplate: "")
+            .trimmingCharacters(in: .whitespacesAndNewlines.union(.punctuationCharacters))
+        let cjkCount = answerWithoutCitations.unicodeScalars.filter { (0x4E00...0x9FFF).contains($0.value) || (0x3400...0x4DBF).contains($0.value) }.count
+        guard cjkCount >= 6 else {
+            throw ThoughtError.message("模型回覆內容過短或不完整，已不採用。請再問一次。")
+        }
         let used = Set(cited).union(inline)
         return ChatAnswer(text: trimmed, sources: available.filter { used.contains($0.id) })
     }

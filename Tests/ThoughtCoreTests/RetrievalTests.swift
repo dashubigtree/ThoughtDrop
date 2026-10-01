@@ -39,12 +39,15 @@ struct RetrievalTests {
 
     @Test func answerValidationRejectsInventedCitations() throws {
         var a = Passage(path: "wiki/p.md", title: "T", text: "t"); a.id = "S1"
-        let ok = try ChatAnswer.validated(answer: "有寫到。[S1]", cited: ["S1"], available: [a])
+        let ok = try ChatAnswer.validated(answer: "這份筆記確實有寫到相關資訊。[S1]", cited: ["S1"], available: [a])
         #expect(ok.sources == [a])
         #expect(throws: (any Error).self) { try ChatAnswer.validated(answer: "有寫到。[S2]", cited: ["S1"], available: [a]) }
         #expect(throws: (any Error).self) { try ChatAnswer.validated(answer: "有寫到。", cited: ["S9"], available: [a]) }
         #expect(throws: (any Error).self) { try ChatAnswer.validated(answer: "  ", cited: [], available: [a]) }
         #expect(try ChatAnswer.validated(answer: "知識庫裡沒有足夠資料", cited: [], available: [a]).sources.isEmpty)
+        #expect(throws: (any Error).self) { try ChatAnswer.validated(answer: "test", cited: ["S1"], available: [a]) }
+        #expect(throws: (any Error).self) { try ChatAnswer.validated(answer: "這是一段看似合理但沒有引用的中文回答", cited: ["S1"], available: [a]) }
+        #expect(throws: (any Error).self) { try ChatAnswer.validated(answer: "test [S1]", cited: ["S1"], available: [a]) }
     }
 
     @Test func chatIsSavedOutsideTheWiki() throws {

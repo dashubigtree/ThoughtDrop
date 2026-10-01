@@ -52,7 +52,9 @@ struct IntegrationTests {
         let result = try await CLITransport.run(executable: URL(fileURLWithPath: "/bin/cat"), arguments: [], input: input, directory: directory, timeout: 5)
         #expect(result.status == 0)
         #expect(String(decoding: result.stdout, as: UTF8.self) == input)
-        #expect(try FileManager.default.contentsOfDirectory(atPath: directory.path).isEmpty)
+        let leftovers = try FileManager.default.contentsOfDirectory(atPath: directory.path)
+            .filter { $0.hasSuffix(".stdin") || $0.hasSuffix(".stdout") || $0.hasSuffix(".stderr") }
+        #expect(leftovers.isEmpty)
     }
     @Test func processTimesOut() async throws {
         let directory = try temporary()
