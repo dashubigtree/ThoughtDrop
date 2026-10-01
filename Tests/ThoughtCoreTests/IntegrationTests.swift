@@ -120,3 +120,19 @@ struct VaultResolveTests {
         #expect(VaultLocation.resolve(environment: ["THOUGHTDROP_VAULT": "/tmp/vault"], home: home).path == "/tmp/vault")
     }
 }
+
+struct ShortClipTests {
+    @Test func thresholdAndDiscardMoveFilesWithoutDeleting() throws {
+        #expect(Clip.isTooShort(2.9)); #expect(!Clip.isTooShort(3))
+        let root = FileManager.default.temporaryDirectory.appendingPathComponent("ThoughtDrop-short-\(UUID())")
+        defer { try? FileManager.default.removeItem(at: root) }
+        let archive = try Archive(root: root)
+        let clip = Clip()
+        try archive.save(clip)
+        try Data([0]).write(to: archive.audio(clip))
+        var removed: [String] = []
+        try archive.discard(clip) { removed.append($0.lastPathComponent) }
+        #expect(removed.count == 3)
+        #expect(removed.contains("\(clip.id).m4a"))
+    }
+}

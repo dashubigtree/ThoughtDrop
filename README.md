@@ -17,6 +17,7 @@
 - **LLM 校正與整理**：用既有的 **ChatGPT 訂閱（Codex CLI）** 或 **Claude 訂閱（Claude Code）**，也保留 OpenAI API 模式。
 - **每日 17:00 整理**：自動產生「一日回顧」「明日代辦」，並維護跨日累積的主題 Wiki；睡眠或退出後，喚醒時自動補做。
 - **Obsidian 原生**：輸出帶 YAML 屬性與 `[[wikilink]]` 的 Markdown，每則 Wiki 條目都附逐字稿來源。
+- **過濾誤觸**：少於 3 秒的錄音不送辨識，檔案移到垃圾桶（可救回）。
 - **失敗不丟資料**：先存音檔，再辨識、再校正；任何一步失敗都保留原始資料，可從選單重試。
 
 ## 設計重點
@@ -44,7 +45,7 @@ Sources/
 │   └── VaultLocation   # Obsidian vault 解析與舊資料搬移
 ├── ThoughtDrop/        # SwiftUI 選單列 App、錄音、設定
 └── ThoughtDropTools/   # 維護指令（prepare-vault、check-codex、check-claude）
-Tests/                  # 22 項測試
+Tests/                  # 23 項測試
 ```
 
 ## 快速開始

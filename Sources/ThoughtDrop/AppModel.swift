@@ -128,6 +128,14 @@ final class AppModel: ObservableObject {
         current = nil
         recording = false
         elapsedTimer?.invalidate(); elapsedTimer = nil
+        if error == nil, Clip.isTooShort(duration) {
+            do {
+                try archive.discard(clip)
+                clips.removeAll { $0.id == clip.id }
+                message = "錄音少於 \(Int(Clip.minimumDuration)) 秒，已略過（檔案在垃圾桶）"
+            } catch { errorMessage = "錄音過短但無法移除：\(error.localizedDescription)" }
+            return
+        }
         clip.duration = duration
         clip.status = .recorded
         clip.error = error

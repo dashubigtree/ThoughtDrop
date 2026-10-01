@@ -14,6 +14,10 @@ public struct Clip: Codable, Identifiable {
     public var error: String?
     public var text: String { corrected ?? raw }
 
+    /// Recordings shorter than this are treated as accidental taps and never sent to recognition.
+    public static let minimumDuration: Double = 3
+    public static func isTooShort(_ duration: Double) -> Bool { duration < minimumDuration }
+
     public init(date: Date = Date(), calendar: Calendar = .current) {
         id = UUID().uuidString.lowercased()
         self.date = date

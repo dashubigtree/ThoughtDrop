@@ -59,6 +59,13 @@ public final class Archive {
         try write(text, to: dir.appendingPathComponent("transcripts/\(clip.id).md"))
     }
 
+    /// Moves a clip's audio, transcript and metadata to the Trash (recoverable). `remove` is injectable for tests.
+    public func discard(_ clip: Clip, remove: (URL) throws -> Void = { try FileManager.default.trashItem(at: $0, resultingItemURL: nil) }) throws {
+        let dir = folder(clip.day)
+        for url in [audio(clip), dir.appendingPathComponent("transcripts/\(clip.id).md"), dir.appendingPathComponent("metadata/\(clip.id).json")]
+        where fm.fileExists(atPath: url.path) { try remove(url) }
+    }
+
     public func loadClips() throws -> [Clip] {
         var clips: [Clip] = []
         for day in try fm.contentsOfDirectory(at: root.appendingPathComponent("days"), includingPropertiesForKeys: nil) {
