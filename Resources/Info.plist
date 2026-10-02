@@ -6,8 +6,9 @@
 <key>CFBundleIdentifier</key><string>local.thoughtdrop.app</string>
 <key>CFBundleExecutable</key><string>ThoughtDrop</string>
 <key>CFBundlePackageType</key><string>APPL</string>
-<key>CFBundleShortVersionString</key><string>1.1.0</string>
-<key>CFBundleVersion</key><string>2</string>
+<key>CFBundleShortVersionString</key><string>1.1.1</string>
+<key>CFBundleVersion</key><string>3</string>
+<key>CFBundleIconFile</key><string>ThoughtDrop.icns</string>
 <key>LSMinimumSystemVersion</key><string>14.0</string>
 <key>LSUIElement</key><true/>
 <key>NSMicrophoneUsageDescription</key><string>按下錄音後，拾念使用麥克風記錄你的想法並儲存在本機。</string>
