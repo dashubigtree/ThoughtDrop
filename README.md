@@ -1,5 +1,7 @@
 # 拾念 ThoughtDrop
 
+![拾念 ThoughtDrop App 圖示](Resources/ThoughtDrop-icon.png)
+
 > 在 Mac 上接住一閃即逝的想法：按一下錄音，語音自動變成校正過的逐字稿，每天傍晚整理成回顧、明日待辦與可累積的 Obsidian 知識庫。
 
 ![platform](https://img.shields.io/badge/platform-macOS%2014%2B-lightgrey) ![swift](https://img.shields.io/badge/Swift-5.9-orange) ![license](https://img.shields.io/badge/license-MIT-blue)
